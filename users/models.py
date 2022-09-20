@@ -1,5 +1,6 @@
 from django.db import models
 from django.contrib.auth.models import AbstractUser
+from multiselectfield import MultiSelectField
 
 
 class CustomUser(AbstractUser):
@@ -10,8 +11,9 @@ class CustomUser(AbstractUser):
 	location = models.CharField(max_length=30, blank=True)
 	phone = models.CharField(max_length=30, blank=True)
 	email_contact = models.CharField(max_length=50, blank=True)
-	links = models.ManyToManyField('Links',blank=True)
-	messagers = models.ManyToManyField('Messager',blank=True)
+	links = models.ManyToManyField('Links', blank=True)
+	messagers = models.ManyToManyField('Messager', blank=True)
+	slug = models.SlugField()
 
 	# Todo сделать верификацию пользователя
 
@@ -22,7 +24,7 @@ class CustomUser(AbstractUser):
 		return self.username
 
 
-class freelacer(CustomUser):
+class Freelacer(CustomUser):
 	exp = (
 		(1, 'Менее года'),
 		(2, 'Более года'),
@@ -36,11 +38,9 @@ class freelacer(CustomUser):
 	work_experience = models.CharField(choices=exp, blank=True)
 	activities = models.ManyToManyField('Activity', blank=True)
 	skills = models.ManyToManyField('Skill', blank=True)
-	salary = models.ForeignKey('Salary', blank=True)
+	salary = models.ForeignKey('Salary', on_delete=models.CASCADE, blank=True)
 	is_published = models.BooleanField(default=True)
 	# Todo добавить приложение проекты которые будут включать в себя отдельный раздел связанный с пользователем
-
-	slug = models.SlugField()
 
 	class Meta:
 		ordering = ['-created', 'username']
@@ -50,7 +50,8 @@ class freelacer(CustomUser):
 
 
 class Customer(CustomUser):
-	user = models.OneToOneField(CustomUser,on_delete=models.CASCADE)
+	user = models.OneToOneField(CustomUser, on_delete=models.CASCADE)
+
 	class Meta:
 		ordering = ['-created', 'username']
 
@@ -71,6 +72,8 @@ class Activity(models.Model):
 
 class Category(models.Model):
 	title = models.CharField(max_length=50)
+	slug = models.SlugField()
+
 
 	def __str__(self):
 		return self.title
@@ -78,6 +81,7 @@ class Category(models.Model):
 
 class Skill(models.Model):
 	name = models.CharField(max_length=50)
+	slug = models.SlugField()
 
 	def __str__(self):
 		return self.name
@@ -102,8 +106,8 @@ class Salary(models.Model):
 	)
 	salary = models.IntegerField(max_length=20, blank=True)
 	salary_per = models.CharField(choices=options, blank=True)
-	pay_method = models.CharField(choices=methods, blank=True)
-	ownership = models.CharField(choices=ownerships, blank=True)
+	pay_method = MultiSelectField(choices=methods, max_choices=3, blank=True)
+	ownership = MultiSelectField(choices=ownerships, max_choices=3, blank=True)
 
 	def __str__(self):
 		return f'{self.salary} {self.pay_method}'
@@ -125,3 +129,20 @@ class Messager(models.Model):
 	number = models.CharField(max_length=50, blank=True)
 
 
+class Review(models.Model):
+	user = models.ForeignKey(CustomUser, on_delete=models.CASCADE)
+	VOTE_TYPE = (
+		('up', 'Up Vote'),
+		('down', 'Down Vote'),
+	)
+	review_text = models.TextField(null=True, blank=True)
+	value = models.CharField(max_length=200, choices=VOTE_TYPE)
+	created = models.DateTimeField(auto_now_add=True)
+
+	def __str__(self):
+		return self.value
+
+# Todo сделать страницу финансов для заказчиков взять из habr freelance
+# Todo добавить подписки для заказчиков тоже habr freelance
+# Todo добавить историю транзакций
+# Todo закладки пользователей
