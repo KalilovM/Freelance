@@ -12,7 +12,8 @@ class CustomUser(AbstractUser):
 	phone = models.CharField(max_length=30, blank=True)
 	email_contact = models.CharField(max_length=50, blank=True)
 	links = models.ManyToManyField('Links', blank=True)
-	messagers = models.ManyToManyField('Messager', blank=True)
+	messengers = models.ManyToManyField('users.Messenger', blank=True)
+	created = models.DateTimeField(auto_now_add=True)
 	slug = models.SlugField()
 
 	# Todo сделать верификацию пользователя
@@ -24,7 +25,7 @@ class CustomUser(AbstractUser):
 		return self.username
 
 
-class Freelacer(CustomUser):
+class Freelancer(CustomUser):
 	exp = (
 		(1, 'Менее года'),
 		(2, 'Более года'),
@@ -32,14 +33,14 @@ class Freelacer(CustomUser):
 		(4, 'Более пяти лет'),
 		(5, 'Более 10 лет'),
 	)
-	user = models.OneToOneField(CustomUser, on_delete=models.CASCADE)
 	profession = models.CharField(max_length=70, blank=True)
 	bio = models.TextField(max_length=500, blank=True)
-	work_experience = models.CharField(choices=exp, blank=True)
-	activities = models.ManyToManyField('Activity', blank=True)
-	skills = models.ManyToManyField('Skill', blank=True)
-	salary = models.ForeignKey('Salary', on_delete=models.CASCADE, blank=True)
+	work_experience = models.CharField(choices=exp, max_length=15, blank=True)
+	activities = models.ManyToManyField('users.Activity', blank=True)
+	skills = models.ManyToManyField('users.Skill', blank=True)
+	salary = models.ForeignKey('users.Salary', on_delete=models.CASCADE, blank=True)
 	is_published = models.BooleanField(default=True)
+
 	# Todo добавить приложение проекты которые будут включать в себя отдельный раздел связанный с пользователем
 
 	class Meta:
@@ -50,7 +51,6 @@ class Freelacer(CustomUser):
 
 
 class Customer(CustomUser):
-	user = models.OneToOneField(CustomUser, on_delete=models.CASCADE)
 
 	class Meta:
 		ordering = ['-created', 'username']
@@ -61,7 +61,7 @@ class Customer(CustomUser):
 
 class Activity(models.Model):
 	title = models.CharField(max_length=70)
-	category = models.ForeignKey('Category', on_delete=models.SET_NULL)
+	category = models.ForeignKey('users.Category', on_delete=models.SET_NULL, null=True)
 
 	class Meta:
 		ordering = ['title']
@@ -73,7 +73,6 @@ class Activity(models.Model):
 class Category(models.Model):
 	title = models.CharField(max_length=50)
 	slug = models.SlugField()
-
 
 	def __str__(self):
 		return self.title
@@ -104,10 +103,10 @@ class Salary(models.Model):
 		(2, "ИП"),
 		(3, "Физ. лицо"),
 	)
-	salary = models.IntegerField(max_length=20, blank=True)
-	salary_per = models.CharField(choices=options, blank=True)
-	pay_method = MultiSelectField(choices=methods, max_choices=3, blank=True)
-	ownership = MultiSelectField(choices=ownerships, max_choices=3, blank=True)
+	salary = models.IntegerField(blank=True)
+	salary_per = models.CharField(choices=options, blank=True, max_length=20)
+	pay_method = MultiSelectField(choices=methods, max_choices=len(methods), max_length=30, blank=True)
+	ownership = MultiSelectField(choices=ownerships, max_choices=len(ownerships), max_length=30, blank=True)
 
 	def __str__(self):
 		return f'{self.salary} {self.pay_method}'
@@ -117,7 +116,7 @@ class Links(models.Model):
 	link = models.CharField(max_length=70, blank=True)
 
 
-class Messager(models.Model):
+class Messenger(models.Model):
 	choices = (
 		(1, "Whatsapp"),
 		(1, "Telegram"),
@@ -125,12 +124,12 @@ class Messager(models.Model):
 		(1, "ICQ"),
 		(1, "Jabber"),
 	)
-	messager = models.CharField(choices=choices, blank=True, default=1)
+	messenger = models.CharField(choices=choices, blank=True, max_length=15, default=1)
 	number = models.CharField(max_length=50, blank=True)
 
 
 class Review(models.Model):
-	user = models.ForeignKey(CustomUser, on_delete=models.CASCADE)
+	user = models.ForeignKey('users.CustomUser', on_delete=models.CASCADE)
 	VOTE_TYPE = (
 		('up', 'Up Vote'),
 		('down', 'Down Vote'),
