@@ -2,6 +2,22 @@ from django.db import models
 from django.contrib.auth.models import AbstractUser
 from multiselectfield import MultiSelectField
 
+options = (
+	(1, "За час"),
+	(2, "За месяц"),
+	(3, "За тысячу знаков"),
+	(4, "За проект"),
+)
+methods = (
+	(1, "наличный расчет"),
+	(2, "безналичный расчет"),
+	(3, "электронные деньги"),
+)
+ownerships = (
+	(1, "Юр. лицо"),
+	(2, "ИП"),
+	(3, "Физ. лицо"),
+)
 
 class CustomUser(AbstractUser):
 	# Todo сделать валидацию изображения (размер, разрешение)
@@ -87,22 +103,6 @@ class Skill(models.Model):
 
 
 class Salary(models.Model):
-	options = (
-		(1, "За час"),
-		(2, "За месяц"),
-		(3, "За тысячу знаков"),
-		(4, "За проект"),
-	)
-	methods = (
-		(1, "наличный расчет"),
-		(2, "безналичный расчет"),
-		(3, "электронные деньги"),
-	)
-	ownerships = (
-		(1, "Юр. лицо"),
-		(2, "ИП"),
-		(3, "Физ. лицо"),
-	)
 	salary = models.IntegerField(blank=True)
 	salary_per = models.CharField(choices=options, blank=True, max_length=20)
 	pay_method = MultiSelectField(choices=methods, max_choices=len(methods), max_length=30, blank=True)
